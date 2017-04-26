@@ -26,10 +26,11 @@ img {
   margin-top: 30px;
 }
 
-body {
+#button-login {
+  color: black;
 }
 
-#button-login {
+input {
   color: black;
 }
 
