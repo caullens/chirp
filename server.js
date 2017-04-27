@@ -14,6 +14,8 @@ var fileserver = require('./lib/fileserver');
 var http = require('http');
 var url = require('url');
 var fs = require('fs');
+var encryption = require('./lib/encryption');
+var urlencoded = require('./lib/form-urlencoded');
 var sqlite3 = require('sqlite3').verbose();
 var db = new sqlite3.Database('chirp.sqlite3');
 
@@ -104,6 +106,7 @@ function handleRequest(req, res) {
     // or default page.
     case '':
     case 'home':
+    case 'index.html':
       if(req.method == 'GET') {
         serveIndex(req, res);
       } else if(req.method == 'POST') {
@@ -113,13 +116,76 @@ function handleRequest(req, res) {
     case 'login':
       if(req.method == 'GET') {
         serveLogin(req, res);
+      } else {
+        // For POST requests, parse the urlencoded body
+        urlencoded(req, res, function(req, res){
+          var username = req.body.username;
+          var user = db.get('SELECT * FROM users WHERE username=?',[username]);
+          if(user) {
+            var salt = user.salt;
+            var cryptedPass = user.crypted_password;
+            if(cryptedPass == encryption.encipher(req.body.password + salt)) {
+              // matching password & username - log the user in
+              // by creating the session object
+              var session = {username: username};
+              // JSON encode the session object
+              var sessionData = JSON.stringify(session);
+              // Encrypt the session data
+              var sessionCrypt = encryption.encipher(sessionData);
+              // And send it to the client as a session cookie
+              res.setHeader("Set-Cookie", ["cryptsession=" + sessionCrypt + "; session;"]);
+              // Finally, redirect back to the index
+              res.statusCode = 302;
+              res.setHeader("Location", "/index.html");
+              res.end();
+            } else {
+              // Not a username/password match, redirect to
+              res.statusCode = 302;
+              res.setHeader("Location", "/login");
+              res.end();
+            }
+          }
+        });
       }
       break;
     case 'user':
       req.params.user = urlParts[2];
       serveUser(req, res);
     case 'create-account':
-      if(req.method == 'GET') serveCreate(req, res);
+      if(req.method == 'GET') {
+        serveCreate(req, res);
+      } else {
+        urlencoded(req, res, function(req, res) {
+          var username = req.body.username;
+          var password = req.body.password;
+          var confPass = req.body.confirmPassword;
+
+          db.get('SELECT * FROM users WHERE username=?', [username], function(user) {
+            if(user || password != confPass) {
+              res.statusCode = 302;
+              res.setHeader("Location", "/create-account");
+              serveCreate(req, res);
+            } else {
+              var salt = encryption.salt();
+              var cryptedPass = encryption.encipher(password + salt);
+
+              db.run('INSERT INTO users (username, crypted_password, salt) VALUES (?,?,?)',
+                        [username, cryptedPass, salt], function(err) {
+                          if(err) {
+                            console.log(err);
+                            res.statusCode = 500;
+                            res.setHeader("Location", "/create-account");
+                            serveCreate(req, res);
+                            return;
+                          } else {
+                            res.setHeader('Location', '/login');
+                            serveLogin(req, res);
+                          }
+                        });
+            }
+          });
+        });
+      }
       break;
     default:
       // Check if the request is for a file in the
