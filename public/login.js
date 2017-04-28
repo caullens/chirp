@@ -1,8 +1,8 @@
 "use strict;"
 
-var encryption = require('../lib/encryption.js');
-
 $(function() {
+  $.getScript('/encryption.js', function())
+  console.log(encryption);
   $("#button-login").on('click', function(event) {
     event.preventDefault();
     var name = $('#user-field').val();

@@ -71,6 +71,11 @@ function serveCreate(req, res) {
   res.end(template.render('create-account.html'));
 }
 
+function serveIndex(req, res) {
+  res.setHeader('Content-Type', 'text/html');
+  res.end(template.render('index.html'));
+}
+
 /** @function serveImage
  * A function to serve an image file.
  * @param {string} filename - the filename of the image
@@ -118,33 +123,34 @@ function handleRequest(req, res) {
         serveLogin(req, res);
       } else {
         // For POST requests, parse the urlencoded body
-        urlencoded(req, res, function(req, res){
+        urlencoded(req, res, function(req, res) {
           var username = req.body.username;
-          var user = db.get('SELECT * FROM users WHERE username=?',[username]);
-          if(user) {
-            var salt = user.salt;
-            var cryptedPass = user.crypted_password;
-            if(cryptedPass == encryption.encipher(req.body.password + salt)) {
-              // matching password & username - log the user in
-              // by creating the session object
-              var session = {username: username};
-              // JSON encode the session object
-              var sessionData = JSON.stringify(session);
-              // Encrypt the session data
-              var sessionCrypt = encryption.encipher(sessionData);
-              // And send it to the client as a session cookie
-              res.setHeader("Set-Cookie", ["cryptsession=" + sessionCrypt + "; session;"]);
-              // Finally, redirect back to the index
-              res.statusCode = 302;
-              res.setHeader("Location", "/index.html");
-              res.end();
-            } else {
-              // Not a username/password match, redirect to
-              res.statusCode = 302;
-              res.setHeader("Location", "/login");
-              res.end();
+          db.get('SELECT * FROM users WHERE username=?',[username], function(err, user) {
+            if(user) {
+              var salt = user.salt;
+              var cryptedPass = user.crypted_password;
+              if(cryptedPass == encryption.encipher(req.body.password + salt)) {
+                // matching password & username - log the user in
+                // by creating the session object
+                var session = {username: username};
+                // JSON encode the session object
+                var sessionData = JSON.stringify(session);
+                // Encrypt the session data
+                var sessionCrypt = encryption.encipher(sessionData);
+                // And send it to the client as a session cookie
+                res.setHeader("Set-Cookie", ["cryptsession=" + sessionCrypt + "; session;"]);
+                // Finally, redirect back to the index
+                res.statusCode = 302;
+                res.setHeader("Location", "/index.html");
+                serveIndex(req, res);
+              } else {
+                // Not a username/password match, redirect to
+                res.statusCode = 302;
+                res.setHeader("Location", "/login");
+                serveLogin(req, res);
+              }
             }
-          }
+          });
         });
       }
       break;
@@ -160,7 +166,8 @@ function handleRequest(req, res) {
           var password = req.body.password;
           var confPass = req.body.confirmPassword;
 
-          db.get('SELECT * FROM users WHERE username=?', [username], function(user) {
+          db.get('SELECT * FROM users WHERE username=?', [username], function(err, user) {
+            console.log(user);
             if(user || password != confPass) {
               res.statusCode = 302;
               res.setHeader("Location", "/create-account");

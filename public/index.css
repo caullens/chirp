@@ -1,0 +1,8 @@
+* {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  color: rgb(119, 78, 144);
+  font-family: 'Exo', sans-serif;
+  font-weight: bold;
+}

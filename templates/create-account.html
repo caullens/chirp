@@ -3,30 +3,27 @@
   <head>
     <title>Chirp - Create Account</title>
     <link href="login.css" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Exo:100" rel="stylesheet">
   </head>
   <body>
     <div id="login-div">
     <img src="logo.png" alt="Chirp logo">
-      <form id="login-form" action="" method="POST" enctype="multipart/form-data">
-        <h2>Create Account</h2>
-        <label for="username">
-          Username
-          <input id='user-field' type="text" name="username"/>
-        </label>
-        <br />
-        <label for="password">
-          Password
-          <input id='pass-field' type="password" name="password"/>
-        </label>
-        <br />
-        <label for="confirm-password">
-          Confirm password
-          <input id="confirm-password"  type="password" name="confirmPassword"/>
-        </label>
-        <br />
-        <input id="button-create" type="submit" value="Create Account">
-      </form>
-      <a href="login">Back to Login</a>
+      <div id="form-div">
+        <form id="login-form" action="" method="POST">
+          <h2>Create Account</h2>
+          <label for="username">USERNAME</label>
+          <input id='user-field' class='text-fields' type="text" name="username"/>
+          <br/>
+          <label for="password">PASSWORD</label>
+          <input id='pass-field' class='text-fields' type="password" name="password"/>
+          <br/>
+          <label for="confirmPassword">CONFIRM PASSWORD</label>
+          <input id="confirm-password" class='text-fields' type="password" name="confirmPassword"/>
+          <br/>
+          <button id="button-create">Create Account</button>
+          <a href="login" class="back-link">Back to Login</a>
+        </form>
+      </div>
     </div>
     <script src="https://code.jquery.com/jquery-3.2.1.js" integrity="sha256-DZAnKJ/6XZ9si04Hgrsxu/8s717jcIzLy3oi35EouyE=" crossorigin="anonymous"></script>
   </body>
