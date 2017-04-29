@@ -55,27 +55,6 @@ function parseFiles(filenames, callback) {
   });
 }
 
-/** @function serveLogin
- * A function to serve a HTML page representing an
- * index of computer science pioneers.
- * @param {http.incomingRequest} req - the request object
- * @param {http.serverResponse} res - the response object
- */
-function serveLogin(req, res) {
-    res.setHeader('Content-Type', 'text/html');
-    res.end(template.render('login.html'));
-}
-
-function serveCreate(req, res) {
-  res.setHeader('Content-Type', 'text/html');
-  res.end(template.render('create-account.html'));
-}
-
-function serveIndex(req, res) {
-  res.setHeader('Content-Type', 'text/html');
-  res.end(template.render('index.html'));
-}
-
 /** @function serveImage
  * A function to serve an image file.
  * @param {string} filename - the filename of the image
@@ -97,6 +76,35 @@ function serveImage(fileName, req, res) {
   });
 }
 
+function serveTemplate(req, res, url) {
+  res.setHeader('Content-Type', 'text/html');
+  switch(url) {
+    case '':
+    case 'home':
+    case 'index.html':
+    case 'index':
+      res.setHeader("Location", "/home");
+      res.end(template.render('index.html'));
+      break;
+
+    case 'login':
+    case 'login.html':
+      res.setHeader("Location", "/login");
+      res.end(template.render('login.html'));
+      break;
+
+    case 'create-account':
+    case 'create-account.html':
+      res.setHeader("Location", "/create-account");
+      res.end(template.render('create-account.html'));
+      break;
+
+    default:
+      res.statusCode = 404;
+      res.end();
+  }
+}
+
 /** @function handleRequest
  * A function to determine what to do with
  * incoming http requests.
@@ -107,20 +115,9 @@ function handleRequest(req, res) {
   var urlParts = url.parse(req.url).pathname.split('/');
   console.log(urlParts);
   switch(urlParts[1]) {
-    // Simplest case is the user requests the index
-    // or default page.
-    case '':
-    case 'home':
-    case 'index.html':
-      if(req.method == 'GET') {
-        serveIndex(req, res);
-      } else if(req.method == 'POST') {
-
-      }
-      break;
     case 'login':
       if(req.method == 'GET') {
-        serveLogin(req, res);
+        serveTemplate(req, res, 'login');
       } else {
         // For POST requests, parse the urlencoded body
         urlencoded(req, res, function(req, res) {
@@ -141,25 +138,20 @@ function handleRequest(req, res) {
                 res.setHeader("Set-Cookie", ["cryptsession=" + sessionCrypt + "; session;"]);
                 // Finally, redirect back to the index
                 res.statusCode = 302;
-                res.setHeader("Location", "/index.html");
-                serveIndex(req, res);
+                serveTemplate(req, res, 'index');
               } else {
                 // Not a username/password match, redirect to
                 res.statusCode = 302;
-                res.setHeader("Location", "/login");
-                serveLogin(req, res);
+                serveTemplate(req, res, 'login');
               }
             }
           });
         });
       }
       break;
-    case 'user':
-      req.params.user = urlParts[2];
-      serveUser(req, res);
     case 'create-account':
       if(req.method == 'GET') {
-        serveCreate(req, res);
+        serveTemplate(req, res, 'create-account');
       } else {
         urlencoded(req, res, function(req, res) {
           var username = req.body.username;
@@ -170,8 +162,7 @@ function handleRequest(req, res) {
             console.log(user);
             if(user || password != confPass) {
               res.statusCode = 302;
-              res.setHeader("Location", "/create-account");
-              serveCreate(req, res);
+              serveTemplate(req, res, 'create-account');
             } else {
               var salt = encryption.salt();
               var cryptedPass = encryption.encipher(password + salt);
@@ -182,11 +173,10 @@ function handleRequest(req, res) {
                             console.log(err);
                             res.statusCode = 500;
                             res.setHeader("Location", "/create-account");
-                            serveCreate(req, res);
+                            serveTemplate(req, res, 'create-account');
                             return;
                           } else {
-                            res.setHeader('Location', '/login');
-                            serveLogin(req, res);
+                            serveTemplate(req, res, 'login');
                           }
                         });
             }
@@ -201,20 +191,7 @@ function handleRequest(req, res) {
         fileserver.serveFile('public' + req.url, req, res);
       }
       else {
-        // Otherwise, we have three possibilities -
-        // an image file in /images, a JSON file
-        // in /pioneers, or a file we aren't serving.
-        switch(urlParts[1]) {
-          case 'images':
-            serveImage(urlParts[2], req, res);
-            break;
-          case 'pioneers':
-            servePioneer(urlParts[2], req, res);
-            break;
-          default:
-            res.statusCode = 404;
-            res.end("Resource not found");
-        }
+        serveTemplate(req, res, urlParts[1]);
       }
   }
 }
