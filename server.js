@@ -39,7 +39,6 @@ function serveTemplate(req, res, url) {
       break;
 
     case 'login':
-      res.setHeader("Location", "/login");
       res.end(template.render('login.html', req.alert));
       break;
 
@@ -64,6 +63,7 @@ function serveTemplate(req, res, url) {
 
 function login(req, res) {
   if(req.method == 'GET') {
+    res.setHeader("Location", "/login");
     serveTemplate(req, res, 'login');
   } else {
     urlencoded(req, res, function(req, res) {
@@ -195,6 +195,7 @@ function loginRequired(req, res, next) {
   if(!(req.session && req.session.username)) {
     // Redirect to the login page
     res.statusCode = 302;
+    res.setHeader("Location", "/login");
     serveTemplate(req, res, 'login');
     return;
   }
