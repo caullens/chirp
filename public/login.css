@@ -7,6 +7,10 @@
   font-weight: bold;
 }
 
+head {
+  display: none;
+}
+
 body {
   background-image: url('login-background.jpg');
   background-position: center;

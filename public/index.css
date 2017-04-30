@@ -1,4 +1,4 @@
-* {
+body * {
   display: inline-flex;
   flex-direction: column;
   align-items: center;
@@ -9,8 +9,19 @@
 
 #user-info {
   float: right;
-  width: 300px;;
+  width: 15%;
   height: 220px;
+  border: 2px solid rgb(119, 78, 144);
+  border-radius:5px;
+  padding: 10px 50px;
+  background-color: rgb(190,166,205);
+  box-shadow: 7px 7px 5px rgba(0, 0, 0, 0.5);
+}
+
+#chirps {
+  float: left;
+  width: 60%;
+  height: 900px;
   border: 2px solid rgb(119, 78, 144);
   border-radius:5px;
   padding: 10px 50px;
@@ -21,7 +32,6 @@
 img {
   width: 100px;
   height: 100px;
-  float: left;
 }
 
 #user {
