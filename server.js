@@ -196,7 +196,9 @@ function createAccount(req, res) {
                         serveTemplate(req, res, ['','create-account']);
                         return;
                       } else {
-                        serveTemplate(req, res, ['','login']);
+                        res.statusCode = 302;
+                        res.setHeader("Location", "/login");
+                        res.end();
                       }
                     });
         }
