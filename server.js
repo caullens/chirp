@@ -18,6 +18,7 @@ var encryption = require('./lib/encryption');
 var urlencoded = require('./lib/form-urlencoded');
 var sqlite3 = require('sqlite3').verbose();
 var db = new sqlite3.Database('chirp.sqlite3');
+var parseCookie = require('./lib/cookie-parser');
 
 /* load public directory */
 fileserver.loadDir('public');
@@ -83,12 +84,22 @@ function serveTemplate(req, res, url) {
     case 'home':
     case 'index.html':
     case 'index':
-      res.setHeader("Location", "/home");
-      res.end(template.render('index.html'));
+      loginRequired(req, res, function(req, res) {
+        res.setHeader("Location", "/home");
+        res.end(template.render('index.html'));
+      });
       break;
 
     case 'login':
     case 'login.html':
+      res.setHeader("Location", "/login");
+      res.end(template.render('login.html'));
+      break;
+
+    case 'logout':
+    case 'logout.html':
+      res.setHeader("Set-Cookie", ["cryptsession="]);
+      res.statusCode = 302;
       res.setHeader("Location", "/login");
       res.end(template.render('login.html'));
       break;
@@ -113,6 +124,17 @@ function serveTemplate(req, res, url) {
  * @param {http.serverResponse} res - the response object
  */
 function handleRequest(req, res) {
+  req.session = {}
+  var cookie = req.headers.cookie;
+  if(cookie) {
+    var cookieMap = parseCookie(cookie);
+    var cryptedSession = cookieMap["cryptsession"];
+    if(cryptedSession) {
+      var sessionData = encryption.decipher(cryptedSession);
+      req.session = JSON.parse(sessionData);
+    }
+  }
+
   var urlParts = url.parse(req.url).pathname.split('/');
   console.log(urlParts);
   switch(urlParts[1]) {
@@ -195,6 +217,29 @@ function handleRequest(req, res) {
         serveTemplate(req, res, urlParts[1]);
       }
   }
+}
+
+/** @function loginRequired
+ * A helper function to make sure a user is logged
+ * in.  If they are not logged in, the user is
+ * redirected to the login page.  If they are,
+ * the next request handler is invoked.
+ * @param {http.IncomingRequest} req - the request object
+ * @param {http.serverResponse} res - the response object
+ * @param {function} next - the request handler to invoke if
+ * a user is logged in.
+ */
+function loginRequired(req, res, next) {
+  // Make sure both a session exists and contains a
+  // username (if so, we have a logged-in user)
+  if(!(req.session && req.session.username)) {
+    // Redirect to the login page
+    res.statusCode = 302;
+    serveTemplate(req, res, 'login');
+    return
+  }
+  // Pass control to the next request handler
+  next(req, res);
 }
 
 /* Create and launch the webserver */
