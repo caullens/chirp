@@ -52,7 +52,6 @@ function serveTemplate(req, res, url) {
       break;
 
     case 'create-account':
-      res.setHeader("Location", "/create-account");
       res.end(template.render('create-account.html', req.alert));
       break;
 
