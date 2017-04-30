@@ -80,7 +80,8 @@ function login(req, res) {
             var sessionCrypt = encryption.encipher(sessionData);
             res.setHeader("Set-Cookie", ["cryptsession=" + sessionCrypt + "; session;"]);
             res.statusCode = 302;
-            serveTemplate(req, res, 'index');
+            res.setHeader("Location", "/home");
+            res.end();
           } else {
             req.alert = {alert: "Invalid Username/Password"};
             res.statusCode = 302;
