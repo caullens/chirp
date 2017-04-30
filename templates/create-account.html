@@ -11,6 +11,7 @@
       <div id="form-div">
         <form id="login-form" action="" method="POST">
           <h2>Create Account</h2>
+          <div class="alert-div" id="username-taken"><%=context.alert%></div>
           <label for="username">USERNAME</label>
           <input id='user-field' class='text-fields' type="text" name="username"/>
           <br/>
@@ -19,6 +20,7 @@
           <br/>
           <label for="confirmPassword">CONFIRM PASSWORD</label>
           <input id="confirm-password" class='text-fields' type="password" name="confirmPassword"/>
+          <div class="alert-div" id="divCheckPasswordMatch"></div>
           <br/>
           <button class="button" id="button-create">Create Account</button>
           <a href="login" class="back-link">Back to Login</a>
@@ -26,5 +28,6 @@
       </div>
     </div>
     <script src="https://code.jquery.com/jquery-3.2.1.js" integrity="sha256-DZAnKJ/6XZ9si04Hgrsxu/8s717jcIzLy3oi35EouyE=" crossorigin="anonymous"></script>
+    <script src="create-account.js"></script>
   </body>
 </html>

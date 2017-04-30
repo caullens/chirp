@@ -94,3 +94,8 @@ label {
 #page-not-found-title {
   margin-bottom: 100px;
 }
+
+.alert-div {
+  color: white;
+  margin: 10px;
+}

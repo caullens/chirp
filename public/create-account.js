@@ -1,18 +1,14 @@
-var sqlite3 = require('sqlite3').verbose();
-var db = new sqlite3.Database('chirp.sqlite3');
+function checkPasswordMatch() {
+    var password = $("#pass-field").val();
+    var confirmPassword = $("#confirm-password").val();
 
-$(function() {
-  $('#button-create').on('click', function(event) {
-    event.preventDefault();
-    var username = $('#user-field').val();
-    var pass = $('#pass-field').val();
-    var confPass = $('#confirm-password').val();
-    console.log(username);
+    if (password != confirmPassword)
+        $("#divCheckPasswordMatch").html("Passwords do not match!");
+    else
+        $("#divCheckPasswordMatch").html("");
+}
 
-    db.get('SELECT * FROM users WHERE username=?', [username], function(users) {
-      if(users) {
-        $('#user-field').empty();
-      }
-    });
-  });
+$(document).ready(function() {
+  $("#confirm-password").keyup(checkPasswordMatch);
+  $("#pass-field").keyup(checkPasswordMatch);
 });

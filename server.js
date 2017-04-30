@@ -1,7 +1,6 @@
 /**
  * server.js
- * This file defines the server for a
- * simple photo gallery web app.
+ * This file defines the server for chirp
  */
 "use strict;"
 
@@ -26,57 +25,6 @@ fileserver.loadDir('public');
 /* load templates */
 template.loadDir('templates');
 
-/** @function parseFiles
- * Asynchronous gelper function that takes an array of JSON
- * filenames, and a callback.
- * The first argument of the callback is an error, and
- * the second is an array of the objects corresponding to
- * the JSON files.
- * @param {string[]} filenames - the JSON filenames
- * @param {function} callback - the callback function
- */
-function parseFiles(filenames, callback) {
-  var objectsToParse = filenames.length;
-  var objects = [];
-  filenames.forEach(function(filename){
-    fs.readFile(filename, function(err, data){
-      // if no error ocurrs, parse the file data and
-      // store it in the objects array.
-      if(err) console.error(err);
-      else objects.push(JSON.parse(data));
-      // We reduce the number of files to parse,
-      // regardless of the outcome
-      objectsToParse--;
-      // If we've finished parsing all JSON files,
-      // trigger the callback
-      if(objectsToParse == 0) {
-        callback(false, objects);
-      }
-    })
-  });
-}
-
-/** @function serveImage
- * A function to serve an image file.
- * @param {string} filename - the filename of the image
- * to serve.
- * @param {http.incomingRequest} - the request object
- * @param {http.serverResponse} - the response object
- */
-function serveImage(fileName, req, res) {
-  fs.readFile('images/' + decodeURIComponent(fileName), function(err, data){
-    if(err) {
-      console.error(err);
-      res.statusCode = 404;
-      res.statusMessage = "Resource not found";
-      res.end();
-      return;
-    }
-    res.setHeader('Content-Type', 'image/*');
-    res.end(data);
-  });
-}
-
 function serveTemplate(req, res, url) {
   res.setHeader('Content-Type', 'text/html');
   switch(url) {
@@ -86,34 +34,106 @@ function serveTemplate(req, res, url) {
     case 'index':
       loginRequired(req, res, function(req, res) {
         res.setHeader("Location", "/home");
-        res.end(template.render('index.html'));
+        res.end(template.render('index.html', req.session));
       });
       break;
 
     case 'login':
-    case 'login.html':
       res.setHeader("Location", "/login");
-      res.end(template.render('login.html'));
+      res.end(template.render('login.html', req.alert));
       break;
 
     case 'logout':
     case 'logout.html':
+      res.setHeader("Location", "/login");
       res.setHeader("Set-Cookie", ["cryptsession="]);
       res.statusCode = 302;
-      res.setHeader("Location", "/login");
       res.end(template.render('login.html'));
       break;
 
     case 'create-account':
-    case 'create-account.html':
       res.setHeader("Location", "/create-account");
-      res.end(template.render('create-account.html'));
+      res.end(template.render('create-account.html', req.alert));
       break;
 
     default:
       res.statusCode = 404;
       res.setHeader("Location", "/page-not-found");
       res.end(template.render('page-not-found.html'));
+  }
+}
+
+function login(req, res) {
+  if(req.method == 'GET') {
+    serveTemplate(req, res, 'login');
+  } else {
+    urlencoded(req, res, function(req, res) {
+      var username = req.body.username;
+      db.get('SELECT * FROM users WHERE username=?',[username], function(err, user) {
+        if(user) {
+          console.log(user);
+          var salt = user.salt;
+          var cryptedPass = user.crypted_password;
+          if(cryptedPass == encryption.encipher(req.body.password + salt)) {
+            console.log("correct password");
+            var session = {username: username};
+            var sessionData = JSON.stringify(session);
+            var sessionCrypt = encryption.encipher(sessionData);
+            res.setHeader("Set-Cookie", ["cryptsession=" + sessionCrypt + "; session;"]);
+            res.statusCode = 302;
+            serveTemplate(req, res, 'index');
+          } else {
+            req.alert = {alert: "Invalid Username/Password"};
+            res.statusCode = 302;
+            serveTemplate(req, res, 'login');
+          }
+        } else {
+          req.alert = {alert: "Invalid Username/Password"};
+          res.statusCode = 302;
+          serveTemplate(req, res, 'login');
+        }
+      });
+    });
+  }
+}
+
+function createAccount(req, res) {
+  if(req.method == 'GET') {
+    serveTemplate(req, res, 'create-account');
+  } else {
+    urlencoded(req, res, function(req, res) {
+      var username = req.body.username;
+      var password = req.body.password;
+      var confPass = req.body.confirmPassword;
+
+      db.get('SELECT * FROM users WHERE username=?', [username], function(err, user) {
+        console.log(user);
+        if(user) {
+          res.statusCode = 302;
+          req.alert = {alert: "Username Taken"};
+          serveTemplate(req, res, 'create-account');
+        } else if(password != confPass) {
+          res.statusCode = 302;
+          req.alert = {alert: "Passwords do not Match"};
+          serveTemplate(req, res, 'create-account');
+        } else {
+          var salt = encryption.salt();
+          var cryptedPass = encryption.encipher(password + salt);
+
+          db.run('INSERT INTO users (username, crypted_password, salt) VALUES (?,?,?)',
+                    [username, cryptedPass, salt], function(err) {
+                      if(err) {
+                        console.log(err);
+                        res.statusCode = 500;
+                        serveTemplate(req, res, 'create-account');
+                        return;
+                      } else {
+                        serveTemplate(req, res, 'login');
+                      }
+                    });
+        }
+      });
+    });
   }
 }
 
@@ -124,6 +144,8 @@ function serveTemplate(req, res, url) {
  * @param {http.serverResponse} res - the response object
  */
 function handleRequest(req, res) {
+  req.alert = {alert: ""};
+  //Get cookies
   req.session = {}
   var cookie = req.headers.cookie;
   if(cookie) {
@@ -139,77 +161,16 @@ function handleRequest(req, res) {
   console.log(urlParts);
   switch(urlParts[1]) {
     case 'login':
-      if(req.method == 'GET') {
-        serveTemplate(req, res, 'login');
-      } else {
-        // For POST requests, parse the urlencoded body
-        urlencoded(req, res, function(req, res) {
-          var username = req.body.username;
-          db.get('SELECT * FROM users WHERE username=?',[username], function(err, user) {
-            if(user) {
-              var salt = user.salt;
-              var cryptedPass = user.crypted_password;
-              if(cryptedPass == encryption.encipher(req.body.password + salt)) {
-                // matching password & username - log the user in
-                // by creating the session object
-                var session = {username: username};
-                // JSON encode the session object
-                var sessionData = JSON.stringify(session);
-                // Encrypt the session data
-                var sessionCrypt = encryption.encipher(sessionData);
-                // And send it to the client as a session cookie
-                res.setHeader("Set-Cookie", ["cryptsession=" + sessionCrypt + "; session;"]);
-                // Finally, redirect back to the index
-                res.statusCode = 302;
-                serveTemplate(req, res, 'index');
-              } else {
-                // Not a username/password match, redirect to
-                res.statusCode = 302;
-                serveTemplate(req, res, 'login');
-              }
-            }
-          });
-        });
-      }
+    case 'login.html':
+      login(req, res);
       break;
+
     case 'create-account':
-      if(req.method == 'GET') {
-        serveTemplate(req, res, 'create-account');
-      } else {
-        urlencoded(req, res, function(req, res) {
-          var username = req.body.username;
-          var password = req.body.password;
-          var confPass = req.body.confirmPassword;
-
-          db.get('SELECT * FROM users WHERE username=?', [username], function(err, user) {
-            console.log(user);
-            if(user || password != confPass) {
-              res.statusCode = 302;
-              serveTemplate(req, res, 'create-account');
-            } else {
-              var salt = encryption.salt();
-              var cryptedPass = encryption.encipher(password + salt);
-
-              db.run('INSERT INTO users (username, crypted_password, salt) VALUES (?,?,?)',
-                        [username, cryptedPass, salt], function(err) {
-                          if(err) {
-                            console.log(err);
-                            res.statusCode = 500;
-                            res.setHeader("Location", "/create-account");
-                            serveTemplate(req, res, 'create-account');
-                            return;
-                          } else {
-                            serveTemplate(req, res, 'login');
-                          }
-                        });
-            }
-          });
-        });
-      }
+    case 'create-account.html':
+      createAccount(req, res);
       break;
+
     default:
-      // Check if the request is for a file in the
-      // public directory
       if(fileserver.isCached('public' + req.url)) {
         fileserver.serveFile('public' + req.url, req, res);
       }
@@ -236,7 +197,7 @@ function loginRequired(req, res, next) {
     // Redirect to the login page
     res.statusCode = 302;
     serveTemplate(req, res, 'login');
-    return
+    return;
   }
   // Pass control to the next request handler
   next(req, res);
