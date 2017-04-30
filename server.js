@@ -101,7 +101,8 @@ function serveTemplate(req, res, url) {
 
     default:
       res.statusCode = 404;
-      res.end();
+      res.setHeader("Location", "/page-not-found");
+      res.end(template.render('page-not-found.html'));
   }
 }
 

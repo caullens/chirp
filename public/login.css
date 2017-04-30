@@ -48,7 +48,7 @@ img {
   margin-top: 30px;
 }
 
-button {
+.button {
   background-color: white;
   border: none;
   width: 50%;
@@ -57,9 +57,10 @@ button {
   justify-content: center;
   font-size: 1.2em;
   margin-bottom: 10px;
+  text-decoration: none;
 }
 
-button:hover {
+.button:hover {
   background-color: #e8e8ee;
 }
 
@@ -88,4 +89,8 @@ label {
 .text-fields:focus {
   outline: none;
   border-bottom-color: white;
+}
+
+#page-not-found-title {
+  margin-bottom: 100px;
 }
