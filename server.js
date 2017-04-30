@@ -25,16 +25,78 @@ fileserver.loadDir('public');
 /* load templates */
 template.loadDir('templates');
 
-function serveTemplate(req, res, url) {
+function getUser(username, callback) {
+  db.get('SELECT * FROM users WHERE username=?',[username], function(err, user) {
+    if(!user) {
+      callback(true, undefined);
+      return;
+    }
+
+    var imageUrl = username + '.jpg';
+    fs.readFile('./images/' + imageUrl, function(err, image) {
+      if(err) {
+        imageUrl = 'default.jpg';
+      }
+      var user = template.render('user.html', {username: username, imageUrl: imageUrl});
+      callback(false, user);
+    });
+  });
+}
+
+function serveImage(fileName, req, res) {
+  fs.readFile('images/' + decodeURIComponent(fileName), function(err, data){
+    if(err) {
+      console.error(err);
+      res.statusCode = 404;
+      res.statusMessage = "Resource not found";
+      res.end();
+      return;
+    }
+    res.setHeader('Content-Type', 'image/*');
+    res.end(data);
+  });
+}
+
+function serveTemplate(req, res, urlParts) {
   res.setHeader('Content-Type', 'text/html');
-  switch(url) {
+  switch(urlParts[1]) {
     case '':
     case 'home':
     case 'index.html':
     case 'index':
       loginRequired(req, res, function(req, res) {
-        res.setHeader("Location", "/home");
-        res.end(template.render('index.html', req.session));
+        getUser(req.session.username, function(err, user) {
+          if(err) {
+            res.statusCode = 500;
+            res.end();
+            return;
+          }
+          res.setHeader("Location", "/home");
+          res.end(template.render('index.html', {user: user}));
+        });
+      });
+      break;
+
+    case 'users':
+      loginRequired(req, res, function(req, res) {
+        if(urlParts[2]) {
+          var username = urlParts[2];
+          getUser(username, function(err, user) {
+            if(err) {
+              res.statusCode = 302;
+              res.setHeader("Location", "/page-not-found");
+              res.end();
+              return;
+            } else {
+              res.setHeader("Location", "/users/" + username);
+              res.end(template.render('account.html', {username: username, user: user}));
+            }
+          });
+        } else {
+          res.statusCode = 302;
+          res.setHeader("Location", "/page-not-found");
+          res.end();
+        }
       });
       break;
 
@@ -54,17 +116,23 @@ function serveTemplate(req, res, url) {
       res.end(template.render('create-account.html', req.alert));
       break;
 
-    default:
+    case 'page-not-found':
+    case 'page-not-found.html':
       res.statusCode = 404;
-      res.setHeader("Location", "/page-not-found");
       res.end(template.render('page-not-found.html'));
+      break;
+
+    default:
+      res.statusCode = 302;
+      res.setHeader("Location", "/page-not-found");
+      res.end();
   }
 }
 
 function login(req, res) {
   if(req.method == 'GET') {
     res.setHeader("Location", "/login");
-    serveTemplate(req, res, 'login');
+    serveTemplate(req, res, ['', 'login']);
   } else {
     urlencoded(req, res, function(req, res) {
       var username = req.body.username;
@@ -85,12 +153,12 @@ function login(req, res) {
           } else {
             req.alert = {alert: "Invalid Username/Password"};
             res.statusCode = 302;
-            serveTemplate(req, res, 'login');
+            serveTemplate(req, res, ['', 'login']);
           }
         } else {
           req.alert = {alert: "Invalid Username/Password"};
           res.statusCode = 302;
-          serveTemplate(req, res, 'login');
+          serveTemplate(req, res, ['', 'login']);
         }
       });
     });
@@ -99,7 +167,7 @@ function login(req, res) {
 
 function createAccount(req, res) {
   if(req.method == 'GET') {
-    serveTemplate(req, res, 'create-account');
+    serveTemplate(req, res, ['','create-account']);
   } else {
     urlencoded(req, res, function(req, res) {
       var username = req.body.username;
@@ -109,13 +177,13 @@ function createAccount(req, res) {
       db.get('SELECT * FROM users WHERE username=?', [username], function(err, user) {
         console.log(user);
         if(user) {
-          res.statusCode = 302;
           req.alert = {alert: "Username Taken"};
-          serveTemplate(req, res, 'create-account');
-        } else if(password != confPass) {
           res.statusCode = 302;
+          serveTemplate(req, res, ['','create-account']);
+        } else if(password != confPass) {
           req.alert = {alert: "Passwords do not Match"};
-          serveTemplate(req, res, 'create-account');
+          res.statusCode = 302;
+          serveTemplate(req, res, ['','create-account']);
         } else {
           var salt = encryption.salt();
           var cryptedPass = encryption.encipher(password + salt);
@@ -125,10 +193,10 @@ function createAccount(req, res) {
                       if(err) {
                         console.log(err);
                         res.statusCode = 500;
-                        serveTemplate(req, res, 'create-account');
+                        serveTemplate(req, res, ['','create-account']);
                         return;
                       } else {
-                        serveTemplate(req, res, 'login');
+                        serveTemplate(req, res, ['','login']);
                       }
                     });
         }
@@ -170,12 +238,16 @@ function handleRequest(req, res) {
       createAccount(req, res);
       break;
 
+    case 'images':
+      serveImage(urlParts[2], req, res);
+      break;
+
     default:
       if(fileserver.isCached('public' + req.url)) {
         fileserver.serveFile('public' + req.url, req, res);
       }
       else {
-        serveTemplate(req, res, urlParts[1]);
+        serveTemplate(req, res, urlParts);
       }
   }
 }
@@ -197,7 +269,7 @@ function loginRequired(req, res, next) {
     // Redirect to the login page
     res.statusCode = 302;
     res.setHeader("Location", "/login");
-    serveTemplate(req, res, 'login');
+    serveTemplate(req, res, ['', 'login']);
     return;
   }
   // Pass control to the next request handler
