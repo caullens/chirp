@@ -37,8 +37,11 @@ function getUser(username, callback) {
       if(err) {
         imageUrl = 'default.jpg';
       }
-      var user = template.render('user.html', {username: username, imageUrl: imageUrl});
-      callback(false, user);
+      var userTemplate = template.render('user.html', {username: username,
+                                                      imageUrl: imageUrl,
+                                                      firstname: user.firstname,
+                                                      lastname: user.lastname});
+      callback(false, userTemplate);
     });
   });
 }
@@ -210,7 +213,8 @@ function createAccount(req, res) {
                         res.setHeader("Location", "/account-settings");
                         res.end();
                       }
-                    });
+                    }
+          );
         }
       });
     });
@@ -224,22 +228,35 @@ function accountSettings(req, res) {
   } else {
     multipart(req, res, function(req, res) {
       var username = req.session.username;
-      console.log(req.body.firstname + req.body.lastname);
       var firstName = req.body.firstname;
       var lastName = req.body.lastname;
-      db.get('SELECT * FROM users WHERE username=?',[username], function(err, user) {
-        if(user) {
-            user.firstname = firstName;
-            user.lastname = lastName;
-            res.statusCode = 302;
-            res.setHeader("Location", "/home");
-            res.end();
-          } else {
-            res.statusCode = 500;
-            serveTemplate(req, res, ['', 'home']);
-          }
+      db.run('UPDATE users SET firstname=?, lastname=? WHERE username=?',
+                [firstName, lastName, username], function(err) {
+                  if(err) {
+                    console.log(err);
+                    res.statusCode = 500;
+                    serveTemplate(req, res, ['','home']);
+                    return;
+                  } else {
+                    // check if an image was uploaded
+                    if(req.body.image.filename) {
+                      fs.writeFile('images/' + username+'.jpg', req.body.image.data, function(err){
+                        if(err) {
+                          console.error(err);
+                          res.statusCode = 500;
+                          res.statusMessage = "Server Error";
+                          res.end("Server Error");
+                          return;
+                        }
+                      });
+                    }
+                    res.statusCode = 302;
+                    res.setHeader("Location", "/home");
+                    res.end();
+                  }
+                }
+              );
       });
-    });
   }
 }
 
