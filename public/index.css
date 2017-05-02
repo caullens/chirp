@@ -7,8 +7,8 @@ body * {
   font-weight: bold;
 }
 
-#user-info {
-  float: right;
+#compose {
+  float: left;
   width: 15%;
   height: 220px;
   border: 2px solid rgb(119, 78, 144);
@@ -18,15 +18,28 @@ body * {
   box-shadow: 7px 7px 5px rgba(0, 0, 0, 0.5);
 }
 
+#user-info {
+  float: left;
+  width: 15%;
+  height: 220px;
+  border: 2px solid rgb(119, 78, 144);
+  border-radius:5px;
+  padding: 10px 50px;
+  background-color: rgb(190,166,205);
+  box-shadow: 7px 7px 5px rgba(0, 0, 0, 0.5);
+  margin-right: 5%;
+}
+
 #chirps {
   float: left;
-  width: 60%;
+  width: 40%;
   height: 900px;
   border: 2px solid rgb(119, 78, 144);
   border-radius:5px;
   padding: 10px 50px;
   background-color: rgb(190,166,205);
   box-shadow: 7px 7px 5px rgba(0, 0, 0, 0.5);
+  margin-right: 5%;
 }
 
 img {
@@ -37,4 +50,21 @@ img {
 #user {
   float: left;
   text-decoration: none;
+}
+
+.button {
+  background-color: white;
+  border: none;
+  width: 50%;
+  height: 15%;
+  border-radius: 5px;
+  justify-content: center;
+  font-size: 1.2em;
+  margin-bottom: 10px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.button:hover {
+  background-color: #e8e8ee;
 }

@@ -58,6 +58,7 @@ img {
   font-size: 1.2em;
   margin-bottom: 10px;
   text-decoration: none;
+  cursor: pointer;
 }
 
 .button:hover {

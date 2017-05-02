@@ -6,12 +6,26 @@
     <link href="https://fonts.googleapis.com/css?family=Exo:100" rel="stylesheet">
   </head>
   <body>
-    <div id="chirps">
-      <h2>Chirps</h2>
-    </div>
     <div id="user-info">
       <%=context.user%>
       <a href="logout">Logout</a>
+    </div>
+    <div id="chirps">
+      <h2>Chirps</h2>
+      <p>
+        <%=context.chirps[0].username%>
+        <br/>
+        <%=context.chirps[0].body%>
+        <br/>
+        <%=context.chirps[0].time%>
+      </p>
+    </div>
+    <div id="compose">
+      <h2>Compose Chirp</h2>
+      <form id="compose-form" action="" method="POST">
+        <textarea name="chirptext"></textarea>
+        <a class="button" id="chirp-button">Chirp</a>
+      </form>
     </div>
     <script src="https://code.jquery.com/jquery-3.2.1.js" integrity="sha256-DZAnKJ/6XZ9si04Hgrsxu/8s717jcIzLy3oi35EouyE=" crossorigin="anonymous"></script>
     <script src='index.js' type='text/javascript'></script>

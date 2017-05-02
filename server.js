@@ -25,6 +25,30 @@ fileserver.loadDir('public');
 /* load templates */
 template.loadDir('templates');
 
+function getChirps(username, callback) {
+  chirps = [];
+  followingTable = username + '_following';
+  db.each('SELECT * from ' + followingTable, [], function(err, following) {
+    if(err) console.log(err);
+    else if(!following) console.log('Not following anyone');
+    else {
+      userTable = following.username + '_chirps';
+      db.each('SELECT * from ' + userTable, [], function(err, userChirps) {
+        if(err) console.log(err);
+        else if(!userChirps) console.log('User has no chirps');
+        else {
+          chirps.push({username: following.username, time: userChirps.time, body: userChirps.body});
+        }
+      }, function(err, rows) {
+        chirps.sort(function(a, b) {
+          return b.time - a.time;
+        });
+        callback(false, chirps);
+      });
+    }
+  });
+}
+
 //Create user html template
 function getUser(username, callback) {
   db.get('SELECT * FROM users WHERE username=?',[username], function(err, user) {
@@ -83,8 +107,15 @@ function serveTemplate(req, res, urlParts) {
             res.end();
             return;
           }
-          res.setHeader("Location", "/home");
-          res.end(template.render('index.html', {user: user}));
+          getChirps(req.session.username, function(e, chirps) {
+            if(e) {
+              res.statusCode = 500;
+              res.end();
+              return;
+            }
+            res.setHeader("Location", "/home");
+            res.end(template.render('index.html', {user: user, chirps: chirps}));
+          });
         });
       });
       break;
@@ -145,6 +176,27 @@ function serveTemplate(req, res, urlParts) {
       res.setHeader("Location", "/page-not-found");
       res.end();
   }
+}
+
+function postChirp(req, res) {
+  urlencoded(req, res, function(req, res) {
+    var tableName = req.session.username + '_chirps';
+    var chirp = req.body.chirptext;
+
+    db.run('INSERT INTO '+tableName+' (time, body) VALUES (?,?)',
+              [new Date(), chirp], function(err) {
+                if(err) {
+                  console.log(err);
+                  res.statusCode = 500;
+                  serveTemplate(req, res, ['','home']);
+                  return;
+                  res.statusCode = 302;
+                  res.setHeader("Location", "/home");
+                  res.end();
+                }
+              }
+    );
+  });
 }
 
 function login(req, res) {
@@ -278,6 +330,18 @@ function handleRequest(req, res) {
   var urlParts = url.parse(req.url).pathname.split('/');
   console.log(urlParts);
   switch(urlParts[1]) {
+    case 'index':
+    case 'index.html':
+    case '':
+    case 'home':
+      if(req.method == 'GET') {
+        res.setHeader("Location", "/home");
+        serveTemplate(req, res, ['', 'home']);
+      } else {
+        postChirp(req, res);
+      }
+      break;
+
     case 'login':
     case 'login.html':
       if(req.method == 'GET') {
