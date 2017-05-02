@@ -38,10 +38,18 @@ function getUser(username, callback) {
       if(err) {
         imageUrl = 'default.jpg';
       }
+      var firstName = user.firstname;
+      var lastName = user.lastname;
+      if(!firstName){
+        firstName = "";
+      }
+      if(!lastName) {
+        lastName = "";
+      }
       var userTemplate = template.render('user.html', {username: username,
                                                       imageUrl: imageUrl,
-                                                      firstname: user.firstname,
-                                                      lastname: user.lastname});
+                                                      firstname: firstName,
+                                                      lastname: lastName});
       callback(false, userTemplate);
     });
   });
