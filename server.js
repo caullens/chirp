@@ -26,27 +26,40 @@ fileserver.loadDir('public');
 template.loadDir('templates');
 
 function getChirps(username, callback) {
-  chirps = [];
-  followingTable = username + '_following';
-  db.each('SELECT * from ' + followingTable, [], function(err, following) {
+  var chirps = [];
+  var followingTable = username + '_following';
+  db.all('SELECT * from ' + followingTable, [], function(err, following) {
     if(err) console.log(err);
     else if(!following) console.log('Not following anyone');
     else {
-      userTable = following.username + '_chirps';
-      db.each('SELECT * from ' + userTable, [], function(err, userChirps) {
-        if(err) console.log(err);
-        else if(!userChirps) console.log('User has no chirps');
-        else {
-          chirps.push({username: following.username, time: userChirps.time, body: userChirps.body});
-        }
-      }, function(err, rows) {
-        chirps.sort(function(a, b) {
-          return b.time - a.time;
+      following.forEach(function(followingUser) {
+        userTable = followingUser.username + '_chirps';
+        db.all('SELECT * from ' + userTable, [], function(err, userChirps) {
+          if(err) console.log(err);
+          else if(!userChirps) console.log('User has no chirps');
+          else {
+            userChirps.forEach(function(chirp) {
+              chirps.push({username: followingUser.username,
+                          timestamp: chirp.time,
+                          chirp: chirp.body,
+                          imageUrl: followingUser.username+'.jpg'});
+            });
+          }
         });
-        callback(false, chirps);
       });
+      chirps.sort(function(a, b) {
+        return b.time - a.time;
+      });
+      var chirpTags = chirps.map(function(chirp) {
+        return template.render('chirp.html', chirp);
+      }).join("");
+      callback(false, chirpTags);
     }
   });
+  // callback(false, template.render('chirp.html', {username: '',
+  //                                                 timestamp: '',
+  //                                                 chirp: '',
+  //                                                 imageUrl: 'images/default.jpg'}));//TODO add not following image
 }
 
 //Create user html template
@@ -115,7 +128,7 @@ function serveTemplate(req, res, urlParts) {
             }
             res.setHeader("Location", "/home");
             res.end(template.render('index.html', {user: user, chirps: chirps}));
-          });
+            });
         });
       });
       break;
@@ -262,6 +275,10 @@ function createAccount(req, res) {
                         var sessionData = JSON.stringify(session);
                         var sessionCrypt = encryption.encipher(sessionData);
                         res.setHeader("Set-Cookie", ["cryptsession=" + sessionCrypt + "; session;"]);
+
+                        db.run('CREATE TABLE ' + username + '_chirps (time TEXT, body TEXT);');
+                        db.run('CREATE TABLE ' +username+ '_following (username TEXT);');
+
                         res.statusCode = 302;
                         res.setHeader("Location", "/account-settings");
                         res.end();
@@ -335,7 +352,6 @@ function handleRequest(req, res) {
     case '':
     case 'home':
       if(req.method == 'GET') {
-        res.setHeader("Location", "/home");
         serveTemplate(req, res, ['', 'home']);
       } else {
         postChirp(req, res);
