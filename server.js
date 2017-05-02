@@ -25,6 +25,7 @@ fileserver.loadDir('public');
 /* load templates */
 template.loadDir('templates');
 
+//Create user html template
 function getUser(username, callback) {
   db.get('SELECT * FROM users WHERE username=?',[username], function(err, user) {
     if(!user) {
@@ -139,11 +140,7 @@ function serveTemplate(req, res, urlParts) {
 }
 
 function login(req, res) {
-  if(req.method == 'GET') {
-    res.setHeader("Location", "/login");
-    serveTemplate(req, res, ['', 'login']);
-  } else {
-    urlencoded(req, res, function(req, res) {
+  urlencoded(req, res, function(req, res) {
       var username = req.body.username;
       db.get('SELECT * FROM users WHERE username=?',[username], function(err, user) {
         if(user) {
@@ -171,14 +168,10 @@ function login(req, res) {
         }
       });
     });
-  }
 }
 
 function createAccount(req, res) {
-  if(req.method == 'GET') {
-    serveTemplate(req, res, ['','create-account']);
-  } else {
-    urlencoded(req, res, function(req, res) {
+  urlencoded(req, res, function(req, res) {
       var username = req.body.username;
       var password = req.body.password;
       var confPass = req.body.confirmPassword;
@@ -218,15 +211,10 @@ function createAccount(req, res) {
         }
       });
     });
-  }
 }
 
-function accountSettings(req, res) {
-  if(req.method == 'GET') {
-    res.setHeader("Location", "/account-settings");
-    serveTemplate(req, res, ['', 'account-settings']);
-  } else {
-    multipart(req, res, function(req, res) {
+function updateAccountSettings(req, res) {
+  multipart(req, res, function(req, res) {
       var username = req.session.username;
       var firstName = req.body.firstname;
       var lastName = req.body.lastname;
@@ -257,7 +245,6 @@ function accountSettings(req, res) {
                 }
               );
       });
-  }
 }
 
 /** @function handleRequest
@@ -285,17 +272,31 @@ function handleRequest(req, res) {
   switch(urlParts[1]) {
     case 'login':
     case 'login.html':
-      login(req, res);
+      if(req.method == 'GET') {
+        res.setHeader("Location", "/login");
+        serveTemplate(req, res, ['', 'login']);
+      } else {
+        login(req, res);
+      }
       break;
 
     case 'create-account':
     case 'create-account.html':
-      createAccount(req, res);
+      if(req.method == 'GET') {
+        serveTemplate(req, res, ['','create-account']);
+      } else {
+        createAccount(req, res);
+      }
       break;
 
     case 'account-settings':
     case 'account-settings.html':
-      accountSettings(req, res);
+      if(req.method == 'GET') {
+        res.setHeader("Location", "/account-settings");
+        serveTemplate(req, res, ['', 'account-settings']);
+      } else {
+        updateAccountSettings(req, res);
+      }
       break;
 
     case 'images':
