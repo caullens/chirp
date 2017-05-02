@@ -122,6 +122,12 @@ function serveTemplate(req, res, urlParts) {
       res.end(template.render('page-not-found.html'));
       break;
 
+    case 'account-settings':
+      loginRequired(req, res, function(req, res) {
+        res.end(template.render('account-settings.html'));
+      });
+      break;
+
     default:
       res.statusCode = 302;
       res.setHeader("Location", "/page-not-found");
@@ -196,12 +202,42 @@ function createAccount(req, res) {
                         serveTemplate(req, res, ['','create-account']);
                         return;
                       } else {
+                        var session = {username: username};
+                        var sessionData = JSON.stringify(session);
+                        var sessionCrypt = encryption.encipher(sessionData);
+                        res.setHeader("Set-Cookie", ["cryptsession=" + sessionCrypt + "; session;"]);
                         res.statusCode = 302;
-                        res.setHeader("Location", "/login");
+                        res.setHeader("Location", "/account-settings");
                         res.end();
                       }
                     });
         }
+      });
+    });
+  }
+}
+
+function accountSettings(req, res) {
+  if(req.method == 'GET') {
+    res.setHeader("Location", "/account-settings");
+    serveTemplate(req, res, ['', 'account-settings']);
+  } else {
+    multipart(req, res, function(req, res) {
+      var username = req.session.username;
+      console.log(req.body.firstname + req.body.lastname);
+      var firstName = req.body.firstname;
+      var lastName = req.body.lastname;
+      db.get('SELECT * FROM users WHERE username=?',[username], function(err, user) {
+        if(user) {
+            user.firstname = firstName;
+            user.lastname = lastName;
+            res.statusCode = 302;
+            res.setHeader("Location", "/home");
+            res.end();
+          } else {
+            res.statusCode = 500;
+            serveTemplate(req, res, ['', 'home']);
+          }
       });
     });
   }
@@ -238,6 +274,11 @@ function handleRequest(req, res) {
     case 'create-account':
     case 'create-account.html':
       createAccount(req, res);
+      break;
+
+    case 'account-settings':
+    case 'account-settings.html':
+      accountSettings(req, res);
       break;
 
     case 'images':
