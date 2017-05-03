@@ -8,7 +8,7 @@
   <body>
     <div id="user-info">
       <%=context.user%>
-      <a href="logout">Logout</a>
+      <a href="logout" class="button">Logout</a>
     </div>
     <div id="chirps">
       <h2>Chirps</h2>
@@ -17,11 +17,11 @@
     <div id="compose">
       <h2>Compose Chirp</h2>
       <form id="compose-form" action="" method="POST">
-        <textarea name="chirptext"></textarea>
+        <textarea name="chirptext" id="chirptext"></textarea>
         <a class="button" id="chirp-button">Chirp</a>
       </form>
     </div>
     <script src="https://code.jquery.com/jquery-3.2.1.js" integrity="sha256-DZAnKJ/6XZ9si04Hgrsxu/8s717jcIzLy3oi35EouyE=" crossorigin="anonymous"></script>
-    <script src='index.js' type='text/javascript'></script>
+    <script src='/index.js' type='text/javascript'></script>
   </body>
 </html>

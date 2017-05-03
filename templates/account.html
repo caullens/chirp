@@ -2,14 +2,19 @@
 <html>
   <head>
     <title><%=context.username%></title>
-    <link href="/account.css" type="text/css" rel="stylesheet"/>
+    <link href="/index.css" type="text/css" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css?family=Exo:100" rel="stylesheet">
   </head>
   <body>
     <div id="user-info">
       <%=context.user%>
+      <a class="button" href="/home">Home</a>
     </div>
-    <br />
-    <a href="/home">Home</a>
+    <div id="chirps">
+      <h2>Chirps</h2>
+      <%=context.chirps%>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.2.1.js" integrity="sha256-DZAnKJ/6XZ9si04Hgrsxu/8s717jcIzLy3oi35EouyE=" crossorigin="anonymous"></script>
+    <script src="/account.js"> </script>
   </body>
 </html>

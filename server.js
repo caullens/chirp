@@ -25,16 +25,43 @@ fileserver.loadDir('public');
 /* load templates */
 template.loadDir('templates');
 
+function getUserChirps(username, callback) {
+  var chirpTable = username + '_chirps';
+  db.all('SELECT * from ' + chirpTable, [], function(err, chirps) {
+    if(err) console.log(err);
+    else if(chirps.length < 1) callback(false, 'No Chirps');
+    else {
+      makeChirpTags(chirps, function(err, chirpTags) {
+        callback(false, chirpTags);
+      });
+    }
+  });
+}
+
+function makeChirpTags(allChirps, callback) {
+  var chirps = [];
+  allChirps.forEach(function(chirp) {
+    chirps.push({username: chirp.username,
+                timestamp: chirp.time,
+                chirp: chirp.body,
+                imageUrl: chirp.username+'.jpg'});
+  });
+  chirps.sort(function(a, b) {
+    return b.timestamp - a.timestamp;
+  });
+  var chirpTags = chirps.map(function(chirp) {
+    return template.render('chirp.html', chirp);
+  }).join("");
+  callback(false, chirpTags);
+}
+
 function getChirps(username, callback) {
   var followingTable = username + '_following';
   db.all('SELECT * from ' + followingTable, [], function(err, following) {
     if(err) console.log(err);
-    else if(!following) {
+    else if(following.length == 0) {
       console.log('Not following anyone');
-      callback(false, template.render('chirp.html', {username: '',
-                                                      timestamp: '',
-                                                      chirp: '',
-                                                      imageUrl: 'images/default.jpg'}));//TODO add not following image
+      callback(false, 'No Chirps');
     }
     else {
       var followingTables = '';
@@ -43,28 +70,14 @@ function getChirps(username, callback) {
       });
         db.all(followingTables.slice(0, followingTables.length-7), [], function(err, allChirps) {
           if(err) console.log(err);
-          else if(!allChirps) {
+          else if(allChirps.length == 0) {
             console.log('No chirps');
-            callback(false, template.render('chirp.html', {username: '',
-                                                            timestamp: '',
-                                                            chirp: '',
-                                                            imageUrl: 'images/default.jpg'}));//TODO add not following image
+            callback(false, 'No Chirps');
           }
           else {
-            var chirps = [];
-            allChirps.forEach(function(chirp) {
-              chirps.push({username: chirp.username,
-                          timestamp: chirp.time,
-                          chirp: chirp.body,
-                          imageUrl: chirp.username+'.jpg'});
+            makeChirpTags(allChirps, function(err, chirpTags) {
+              callback(false, chirpTags);
             });
-            chirps.sort(function(a, b) {
-              return b.timestamp - a.timestamp;
-            });
-            var chirpTags = chirps.map(function(chirp) {
-              return template.render('chirp.html', chirp);
-            }).join("");
-            callback(false, chirpTags);
           }
         });
     }
@@ -72,11 +85,20 @@ function getChirps(username, callback) {
 }
 
 //Create user html template
-function getUser(username, callback) {
+function getUser(req, username, callback) {
   db.get('SELECT * FROM users WHERE username=?',[username], function(err, user) {
     if(!user) {
       callback(true, undefined);
       return;
+    }
+
+    var followText = "Follow";
+    if(req.session.username) {
+      db.get('SELECT * FROM ' + req.session.username + '_following WHERE username=?', [username], function(err, row) {
+        if(row) {
+          followText = "Unfollow";
+        }
+      });
     }
 
     var imageUrl = username + '.jpg';
@@ -95,7 +117,8 @@ function getUser(username, callback) {
       var userTemplate = template.render('user.html', {username: username,
                                                       imageUrl: imageUrl,
                                                       firstname: firstName,
-                                                      lastname: lastName});
+                                                      lastname: lastName,
+                                                      followtext: followText});
       callback(false, userTemplate);
     });
   });
@@ -123,7 +146,7 @@ function serveTemplate(req, res, urlParts) {
     case 'index.html':
     case 'index':
       loginRequired(req, res, function(req, res) {
-        getUser(req.session.username, function(err, user) {
+        getUser(req, req.session.username, function(err, user) {
           if(err) {
             res.statusCode = 500;
             res.end();
@@ -146,15 +169,17 @@ function serveTemplate(req, res, urlParts) {
       loginRequired(req, res, function(req, res) {
         if(urlParts[2]) {
           var username = urlParts[2];
-          getUser(username, function(err, user) {
+          getUser(req, username, function(err, user) {
             if(err) {
               res.statusCode = 302;
               res.setHeader("Location", "/page-not-found");
               res.end();
               return;
             } else {
-              res.setHeader("Location", "/users/" + username);
-              res.end(template.render('account.html', {username: username, user: user}));
+              getUserChirps(username, function(err, chirps) {
+                res.setHeader("Location", "/users/" + username);
+                res.end(template.render('account.html', {username: username, user: user, chirps: chirps}));
+              });
             }
           });
         } else {
@@ -301,38 +326,54 @@ function createAccount(req, res) {
     });
 }
 
+function updateFollow(req, res) {
+  var user = req.session.username;
+  var follower = url.parse(req.url).pathname.split('/')[2];
+  db.get('SELECT * FROM ' + user + '_following WHERE username=?', [follower], function(err, row) {
+    if(row) {
+      db.run('DELETE FROM '+user+'_following WHERE username=?', [follower]);
+    } else {
+      db.run('INSERT INTO '+user+'_following (username) VALUES (?)', [follower]);
+
+    }
+  });
+  res.statusCode = 302;
+  res.setHeader("Location", "/home");
+  serveTemplate(req, res, ['','home']);
+}
+
 function updateAccountSettings(req, res) {
   multipart(req, res, function(req, res) {
       var username = req.session.username;
       var firstName = req.body.firstname;
       var lastName = req.body.lastname;
-      db.run('UPDATE users SET firstname=?, lastname=? WHERE username=?',
-                [firstName, lastName, username], function(err) {
-                  if(err) {
-                    console.log(err);
-                    res.statusCode = 500;
-                    serveTemplate(req, res, ['','home']);
-                    return;
-                  } else {
-                    // check if an image was uploaded
-                    if(req.body.image.filename) {
-                      fs.writeFile('images/' + username+'.jpg', req.body.image.data, function(err){
-                        if(err) {
-                          console.error(err);
-                          res.statusCode = 500;
-                          res.statusMessage = "Server Error";
-                          res.end("Server Error");
-                          return;
-                        }
-                      });
+      if(firstName != '' || lastName != ''){
+        db.run('UPDATE users SET firstname=?, lastname=? WHERE username=?',
+                  [firstName, lastName, username], function(err) {
+                    if(err) {
+                      console.log(err);
+                      res.statusCode = 500;
+                      serveTemplate(req, res, ['','home']);
+                      return;
                     }
-                    res.statusCode = 302;
-                    res.setHeader("Location", "/home");
-                    res.end();
                   }
+                );
+            }
+            if(req.body.image.filename) {
+              fs.writeFile('images/' + username+'.jpg', req.body.image.data, function(err){
+                if(err) {
+                  console.error(err);
+                  res.statusCode = 500;
+                  res.statusMessage = "Server Error";
+                  res.end("Server Error");
+                  return;
                 }
-              );
-      });
+              });
+            }
+            res.statusCode = 302;
+            res.setHeader("Location", "/home");
+            res.end();
+        });
 }
 
 /** @function handleRequest
@@ -397,6 +438,14 @@ function handleRequest(req, res) {
         updateAccountSettings(req, res);
       }
       break;
+
+    case 'users':
+    if(req.method == 'GET') {
+      serveTemplate(req, res, urlParts);
+    } else {
+      updateFollow(req, res);
+    }
+    break;
 
     case 'images':
       serveImage(urlParts[2], req, res);

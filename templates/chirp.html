@@ -1,11 +1,8 @@
 <div class="chirp">
-  <div class="chirp-user">
-    <img src='images/<%=context.imageUrl%>' /> <%=context.username%>
-  </div>
+  <a class="chirp-user" href="users/<%=context.username%>">
+    <img src='/images/<%=context.imageUrl%>' /> <%=context.username%>
+  </a>
   <div class="chirp-body">
     <%=context.chirp%>
-  </div>
-  <div class="timestamp">
-    <%=context.timestamp%>
   </div>
 </div>
