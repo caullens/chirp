@@ -8,7 +8,6 @@ body * {
 }
 
 .chirp {
-  align-items: stretch;
   display: inline;
   background-color: white;
   border: 2px solid rgb(119, 78, 144);
@@ -22,6 +21,12 @@ body * {
   height: 50px;
   width: 50px;
   border-radius: 100%;
+  border: 1px solid rgb(119, 78, 144);
+}
+
+.profile-picture {
+  border: 2px solid rgb(119, 78, 144);
+  border-radius: 3px;
 }
 
 .chirp-user {
@@ -32,20 +37,21 @@ body * {
 }
 
 .chirp-body {
-  align-items: flex-start;
   width: 60%;
+  word-break: break-all;
+  display: inline-block;
 }
 
-.timestamp {
+textarea {
+  padding: 0px;
 }
 
 #compose {
-  /*position: fixed;*/
   width: 15%;
   height: 220px;
   border: 2px solid rgb(119, 78, 144);
   border-radius:5px;
-  padding: 10px 50px;
+  padding: 0px 10px;
   background-color: rgb(190,166,205);
   box-shadow: 7px 7px 5px rgba(0, 0, 0, 0.5);
 }
@@ -54,6 +60,12 @@ body * {
   height: 80%;
   width: 200%;
   resize: none;
+  border: 2px solid rgb(119, 78, 144);
+  border-radius: 5px;
+}
+
+#chirptext:focus {
+  outline: none;
 }
 
 #chirp-button {
@@ -61,26 +73,28 @@ body * {
 }
 
 #user-info {
-  /*position: fixed;*/
+  margin-left: 16%;
   float: left;
   width: 15%;
   border: 2px solid rgb(119, 78, 144);
   border-radius:5px;
-  padding: 10px 50px;
   background-color: rgb(190,166,205);
   box-shadow: 7px 7px 5px rgba(0, 0, 0, 0.5);
-  margin-right: 5%;
+}
+
+#user-info a h3 {
+  margin: 0px;
 }
 
 #chirps {
+  margin: 50px 5px 10px 5px;
   float: left;
-  width: 35%;
+  width: 30%;
   border: 2px solid rgb(119, 78, 144);
   border-radius:5px;
   padding: 10px 50px;
   background-color: rgb(190,166,205);
   box-shadow: 7px 7px 5px rgba(0, 0, 0, 0.5);
-  margin-right: 5%;
 }
 
 img {
@@ -88,8 +102,12 @@ img {
   height: 100px;
 }
 
-#user {
+.user {
   float: left;
+  text-decoration: none;
+}
+
+.user a {
   text-decoration: none;
 }
 
@@ -109,3 +127,10 @@ img {
 .button:hover {
   background-color: #e8e8ee;
 }
+
+/*#page {
+  margin-left: 15%;
+  width: 70%;
+  border-left: 2px solid black;
+  border-right: 2px solid black;
+}*/

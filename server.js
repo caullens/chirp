@@ -84,6 +84,60 @@ function getChirps(username, callback) {
   });
 }
 
+function getAllUsers(username, callback) {
+  db.all('SELECT * FROM users', [], function(err, users) {
+    if(err) callback(err, undefined);
+    else {
+        makeUserTags(users, username, function(err, userTags) {
+          callback(false, userTags);
+        });
+    }
+  });
+}
+
+function makeUserTags(allUsers, username, callback) {
+  var users = [];
+  var loopCounter = 0;
+  allUsers.forEach(function(user) {
+    var followText = "Follow";
+    db.get('SELECT * FROM ' + username +'_following WHERE username=?', [user.username], function(err, row) {
+      if(row) {
+        followText = "Unfollow";
+      }
+      var imageUrl = user.username + '.jpg';
+      fs.readFile('./images/' + imageUrl, function(err, image) {
+        if(err) {
+          imageUrl = 'default.jpg';
+        }
+      });
+        var firstName = user.firstname;
+        var lastName = user.lastname;
+        if(!firstName){
+          firstName = "";
+        }
+        if(!lastName) {
+          lastName = "";
+        }
+      users.push({username: user.username,
+                  imageUrl: imageUrl,
+                  firstname: firstName,
+                  lastname: lastName,
+                  followtext: followText});
+
+      loopCounter++;
+      if(loopCounter >= allUsers.length) {
+        users.sort(function(a, b) {
+          return b.username - a.username;
+        });
+        var userTags = users.map(function(user) {
+          return template.render('user.html', user);
+        }).join("");
+        callback(false, userTags);
+      }
+    });
+  });
+}
+
 //Create user html template
 function getUser(req, username, callback) {
   db.get('SELECT * FROM users WHERE username=?',[username], function(err, user) {
@@ -183,9 +237,9 @@ function serveTemplate(req, res, urlParts) {
             }
           });
         } else {
-          res.statusCode = 302;
-          res.setHeader("Location", "/page-not-found");
-          res.end();
+          getAllUsers(req.session.username, function(err, users) {
+            res.end(template.render('users.html', {users: users}));
+          });
         }
       });
       break;
