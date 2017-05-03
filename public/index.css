@@ -7,6 +7,39 @@ body * {
   font-weight: bold;
 }
 
+.chirp {
+  /*display: inline-flex;
+  flex-direction: column;*/
+  display: inline;
+  background-color: white;
+  border: 2px solid rgb(119, 78, 144);
+  border-radius: 5px;
+  margin: 5px;
+  padding: 2px;
+  width: 90%;
+}
+
+.chirp img {
+  height: 50px;
+  width: 50px;
+  border-radius: 100%;
+}
+
+.chirp-user {
+  border-right: 2px solid rgb(119, 78, 144);
+  padding: 2px;
+  width: 30%;
+}
+
+.chirp-body {
+  align-items: flex-start;
+  width: 60%;
+}
+
+.timestamp {
+  align-items: flex-end;
+}
+
 #compose {
   float: left;
   width: 15%;
@@ -32,8 +65,7 @@ body * {
 
 #chirps {
   float: left;
-  width: 40%;
-  height: 900px;
+  width: 35%;
   border: 2px solid rgb(119, 78, 144);
   border-radius:5px;
   padding: 10px 50px;

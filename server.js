@@ -26,40 +26,49 @@ fileserver.loadDir('public');
 template.loadDir('templates');
 
 function getChirps(username, callback) {
-  var chirps = [];
   var followingTable = username + '_following';
   db.all('SELECT * from ' + followingTable, [], function(err, following) {
     if(err) console.log(err);
-    else if(!following) console.log('Not following anyone');
+    else if(!following) {
+      console.log('Not following anyone');
+      callback(false, template.render('chirp.html', {username: '',
+                                                      timestamp: '',
+                                                      chirp: '',
+                                                      imageUrl: 'images/default.jpg'}));//TODO add not following image
+    }
     else {
+      var followingTables = '';
       following.forEach(function(followingUser) {
-        userTable = followingUser.username + '_chirps';
-        db.all('SELECT * from ' + userTable, [], function(err, userChirps) {
+        followingTables += 'SELECT * FROM ' + followingUser.username + '_chirps UNION ';
+      });
+        db.all(followingTables.slice(0, followingTables.length-7), [], function(err, allChirps) {
           if(err) console.log(err);
-          else if(!userChirps) console.log('User has no chirps');
+          else if(!allChirps) {
+            console.log('No chirps');
+            callback(false, template.render('chirp.html', {username: '',
+                                                            timestamp: '',
+                                                            chirp: '',
+                                                            imageUrl: 'images/default.jpg'}));//TODO add not following image
+          }
           else {
-            userChirps.forEach(function(chirp) {
-              chirps.push({username: followingUser.username,
+            var chirps = [];
+            allChirps.forEach(function(chirp) {
+              chirps.push({username: chirp.username,
                           timestamp: chirp.time,
                           chirp: chirp.body,
-                          imageUrl: followingUser.username+'.jpg'});
+                          imageUrl: chirp.username+'.jpg'});
             });
+            chirps.sort(function(a, b) {
+              return b.timestamp - a.timestamp;
+            });
+            var chirpTags = chirps.map(function(chirp) {
+              return template.render('chirp.html', chirp);
+            }).join("");
+            callback(false, chirpTags);
           }
         });
-      });
-      chirps.sort(function(a, b) {
-        return b.time - a.time;
-      });
-      var chirpTags = chirps.map(function(chirp) {
-        return template.render('chirp.html', chirp);
-      }).join("");
-      callback(false, chirpTags);
     }
   });
-  // callback(false, template.render('chirp.html', {username: '',
-  //                                                 timestamp: '',
-  //                                                 chirp: '',
-  //                                                 imageUrl: 'images/default.jpg'}));//TODO add not following image
 }
 
 //Create user html template
@@ -196,17 +205,17 @@ function postChirp(req, res) {
     var tableName = req.session.username + '_chirps';
     var chirp = req.body.chirptext;
 
-    db.run('INSERT INTO '+tableName+' (time, body) VALUES (?,?)',
-              [new Date(), chirp], function(err) {
+    db.run('INSERT INTO '+tableName+' (time, body, username) VALUES (?,?,?)',
+              [new Date(), chirp, req.session.username], function(err) {
                 if(err) {
                   console.log(err);
                   res.statusCode = 500;
                   serveTemplate(req, res, ['','home']);
                   return;
+                }
                   res.statusCode = 302;
                   res.setHeader("Location", "/home");
                   res.end();
-                }
               }
     );
   });
@@ -276,8 +285,10 @@ function createAccount(req, res) {
                         var sessionCrypt = encryption.encipher(sessionData);
                         res.setHeader("Set-Cookie", ["cryptsession=" + sessionCrypt + "; session;"]);
 
-                        db.run('CREATE TABLE ' + username + '_chirps (time TEXT, body TEXT);');
-                        db.run('CREATE TABLE ' +username+ '_following (username TEXT);');
+                        db.run('CREATE TABLE ' + username + '_chirps (time TEXT, body TEXT, username TEXT);');
+                        db.run('CREATE TABLE ' +username+ '_following (username TEXT);', function(err) {
+                          db.run('INSERT INTO '+username+'_following (username) VALUES (?)',[username]);
+                        });
 
                         res.statusCode = 302;
                         res.setHeader("Location", "/account-settings");
