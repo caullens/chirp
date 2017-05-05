@@ -1,0 +1,160 @@
+* {
+  background-color: rgb(248,245,250);
+}
+
+body * {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  color: rgb(119, 78, 144);
+  font-family: 'Exo', sans-serif;
+  font-weight: bold;
+}
+
+.chirp {
+  display: inline;
+  border-bottom: 1px solid rgb(119, 78, 144);
+  width: 100%;
+  padding: 20px;
+}
+
+.chirp img {
+  height: 50px;
+  width: 50px;
+  border-radius: 100%;
+  border: 1px solid rgb(119, 78, 144);
+}
+
+.profile-picture {
+  border: 2px solid rgb(119, 78, 144);
+  border-radius: 3px;
+}
+
+.chirp-user {
+  border-right: 2px solid rgb(119, 78, 144);
+  padding: 2px;
+  width: 30%;
+  text-decoration: none;
+}
+
+.chirp-body {
+  width: 60%;
+  word-break: break-all;
+  display: inline-block;
+}
+
+textarea {
+  padding: 0px;
+}
+
+#compose {
+  margin-top: 50px;
+  width: 15%;
+  height: 220px;
+  padding: 0px 10px;
+  position: fixed;
+}
+
+#chirptext {
+  height: 80%;
+  width: 200%;
+  resize: none;
+  border: 2px solid rgb(119, 78, 144);
+  border-radius: 5px;
+}
+
+#chirptext:focus {
+  outline: none;
+}
+
+#chirp-button {
+  margin: 5px;
+}
+
+#user-info {
+  margin-left: 16%;
+  float: left;
+  width: 15%;
+}
+
+#user-info a h3 {
+  margin: 0px;
+}
+
+#chirps {
+  float: left;
+  width: 30%;
+  border-right: 2px solid rgb(119, 78, 144);
+  border-left: 2px solid rgb(119, 78, 144);
+  padding: 50px;
+  padding-top: 0px;
+  margin: 50px;
+  margin-top: 50px;
+}
+
+img {
+  width: 100px;
+  height: 100px;
+}
+
+.user {
+  margin-top: 50px;
+  float: left;
+  text-decoration: none;
+  /*position: fixed;*/
+}
+
+.user a {
+  text-decoration: none;
+}
+
+.button {
+  background-color: white;
+  border: none;
+  width: 100px;
+  height: 50px;
+  border-radius: 5px;
+  justify-content: center;
+  font-size: 1.2em;
+  margin-bottom: 10px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.button:hover {
+  background-color: #e8e8ee;
+}
+
+#nav-bar{
+  background-color: rgba(248,245,250, 0.98);
+  top: 0;
+  position: fixed;
+  border-bottom: 2px solid rgb(119, 78, 144);
+  display: block;
+  margin-bottom: 10px;
+  height: 75px;
+  width: 100%;
+}
+
+#nav-bar * {
+  display: inline;
+}
+
+#left-bar {
+  margin-right: 350px;
+  margin-left: 265px;
+}
+
+#right-bar {
+}
+
+#logo {
+  height: 50px;
+  width: 72px;
+}
+
+.logo {
+  padding-top: 12px;
+  align-self: center;
+  margin-right: 350px;
+}

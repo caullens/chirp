@@ -1,0 +1,127 @@
+body * {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  color: rgb(119, 78, 144);
+  font-family: 'Exo', sans-serif;
+  font-weight: bold;
+}
+
+.chirp {
+  display: inline;
+  background-color: white;
+  border: 2px solid rgb(119, 78, 144);
+  border-radius: 5px;
+  margin: 5px;
+  padding: 2px;
+  width: 90%;
+}
+
+.chirp img {
+  height: 50px;
+  width: 50px;
+  border-radius: 100%;
+  border: 1px solid rgb(119, 78, 144);
+}
+
+.profile-picture {
+  border: 2px solid rgb(119, 78, 144);
+  border-radius: 3px;
+}
+
+.chirp-user {
+  border-right: 2px solid rgb(119, 78, 144);
+  padding: 2px;
+  width: 30%;
+  text-decoration: none;
+}
+
+.chirp-body {
+  align-items: flex-start;
+  width: 60%;
+  word-break: break-all;
+  display: inline-block;
+}
+
+#compose {
+  width: 15%;
+  height: 220px;
+  border: 2px solid rgb(119, 78, 144);
+  border-radius:5px;
+  padding: 10px 50px;
+  background-color: rgb(190,166,205);
+  box-shadow: 7px 7px 5px rgba(0, 0, 0, 0.5);
+}
+
+#chirptext {
+  height: 80%;
+  width: 200%;
+  resize: none;
+  border: 2px solid rgb(119, 78, 144);
+  border-radius: 5px;
+}
+
+#chirptext:focus {
+  outline: none;
+}
+
+#chirp-button {
+  margin: 5px;
+}
+
+#user-info {
+  float: left;
+  width: 15%;
+  border: 2px solid rgb(119, 78, 144);
+  border-radius:5px;
+  padding: 10px 50px;
+  background-color: rgb(190,166,205);
+  box-shadow: 7px 7px 5px rgba(0, 0, 0, 0.5);
+  margin-right: 5%;
+}
+
+#chirps {
+  float: left;
+  width: 35%;
+  border: 2px solid rgb(119, 78, 144);
+  border-radius:5px;
+  padding: 10px 50px;
+  background-color: rgb(190,166,205);
+  box-shadow: 7px 7px 5px rgba(0, 0, 0, 0.5);
+  margin-right: 5%;
+}
+
+img {
+  width: 100px;
+  height: 100px;
+}
+
+.user {
+  float: left;
+  text-decoration: none;
+  float: left;
+  width: 15%;
+  border: 2px solid rgb(119, 78, 144);
+  border-radius:5px;
+  padding: 10px 50px;
+  background-color: rgb(190,166,205);
+  box-shadow: 7px 7px 5px rgba(0, 0, 0, 0.5);
+  margin-right: 5%;
+}
+
+.button {
+  background-color: white;
+  border: none;
+  width: 50%;
+  height: 50px;
+  border-radius: 5px;
+  justify-content: center;
+  font-size: 1.2em;
+  margin-bottom: 10px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.button:hover {
+  background-color: #e8e8ee;
+}

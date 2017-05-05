@@ -1,0 +1,31 @@
+{
+  "name": "chirp",
+  "version": "1.0.0",
+  "description": "A Twitter clone for the KSU class CIS 526",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/caullens/chirp.git"
+  },
+  "keywords": [
+    "twitter",
+    "message",
+    "feed",
+    "social",
+    "network"
+  ],
+  "author": "Caullen R Sasnett and David D Freeman",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/caullens/chirp/issues"
+  },
+  "homepage": "https://github.com/caullens/chirp#readme",
+  "dependencies": {
+    "express": "^4.15.2",
+    "sqlite3": "^3.1.8"
+  }
+}
