@@ -6,12 +6,18 @@
     <link href="https://fonts.googleapis.com/css?family=Exo:100" rel="stylesheet">
   </head>
   <body>
+    <ul id="nav-bar">
+      <li><a href="/logout" class="button" id="logout">Logout</a></li>
+      <li><a href="/account-settings" class="button" id="settings">Settings</a></li>
+      <li><a href="/home" class="logo"><img src="/logo.png" id="logo"/></a></li>
+      <li><a href="/users" class="button" id="search">Search</a></li>
+      <li><a href="/home" class="button" id="home">Home</a></li>
+    </ul>
+    <br />
     <div id="user-info">
       <%=context.user%>
-      <a class="button" href="/home">Home</a>
     </div>
     <div id="chirps">
-      <h2>Chirps</h2>
       <%=context.chirps%>
     </div>
     <script src="https://code.jquery.com/jquery-3.2.1.js" integrity="sha256-DZAnKJ/6XZ9si04Hgrsxu/8s717jcIzLy3oi35EouyE=" crossorigin="anonymous"></script>

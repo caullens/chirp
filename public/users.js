@@ -12,4 +12,19 @@ function searchUsers() {
 
 $(document).ready(function() {
   $('#search-text').keyup(searchUsers);
+
+  $('.button').on('click', function(e) {
+    if($(this).attr('id').toLowerCase().includes('follow')) {
+      e.preventDefault();
+
+      if($(this).text() == 'Follow') {
+        $(this).text('Unfollow');
+      } else {
+        $(this).text('Follow');
+      }
+
+      var username = $(this).attr('id').split('-follow')[0];
+      $.post('/users/' + username);
+    }
+  })
 })

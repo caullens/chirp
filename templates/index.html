@@ -6,18 +6,17 @@
     <link href="https://fonts.googleapis.com/css?family=Exo:100" rel="stylesheet">
   </head>
   <body>
-      <ul id="nav-bar">
-        <li><a href="logout" class="button" id="logout">Logout</a></li>
-        <li><a href="account-settings" class="button" id="settings">Settings</a></li>
-        <li><a href="home" class="logo"><img src="logo.png" id="logo"/></a></li>
-        <li><a href="users" class="button" id="search">Search</a></li>
-        <li><a href="home" class="button" id="home">Home</a></li>
-      </ul>
+    <ul id="nav-bar">
+      <li><a href="logout" class="button" id="logout">Logout</a></li>
+      <li><a href="account-settings" class="button" id="settings">Settings</a></li>
+      <li><a href="home" class="logo"><img src="/logo.png" id="logo"/></a></li>
+      <li><a href="users" class="button" id="search">Search</a></li>
+      <li><a href="home" class="button" id="home">Home</a></li>
+    </ul>
     <br />
     <div id="user-info">
       <%=context.user%>
     </div>
-    <!-- <div class="user-spacer"> </div> -->
     <div id="chirps">
       <%=context.chirps%>
     </div>

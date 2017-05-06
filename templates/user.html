@@ -3,6 +3,17 @@
     <%=context.firstname%> <%=context.lastname%>
     <img src="/images/<%=context.imageUrl%>" class="profile-picture"/>
     <h3 class="username" id="user-name"><%=context.username%></h3>
+    <table class="user-stats">
+      <tr>
+        <th>Chirps</th>
+        <th>Following</th>
+        <th>Followers</th>
+      </tr>
+        <td><%=context.userchirps%></td>
+        <td class="user-following"><%=context.userfollowing%></td>
+        <td><%=context.userfollowers%></td>
+      <tr>
+    </table>
   </a>
-  <a class="button" id="follow" onclick=""><%=context.followtext%></a>
+  <a class="button" id="<%=context.username%>-follow"><%=context.followtext%></a>
 </div>

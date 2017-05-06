@@ -1,5 +1,6 @@
 $(document).ready(function() {
-  $('#follow').css('display', 'none');
+  var username = $('.username').text()
+  $('#'+username+'-follow').css('display', 'none');
 
   $('#chirp-button').on('click', function(e) {
     e.preventDefault();

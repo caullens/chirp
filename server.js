@@ -110,30 +110,71 @@ function makeUserTags(allUsers, username, callback) {
           imageUrl = 'default.jpg';
         }
       });
-        var firstName = user.firstname;
-        var lastName = user.lastname;
-        if(!firstName){
-          firstName = "";
-        }
-        if(!lastName) {
-          lastName = "";
-        }
-      users.push({username: user.username,
-                  imageUrl: imageUrl,
-                  firstname: firstName,
-                  lastname: lastName,
-                  followtext: followText});
-
-      loopCounter++;
-      if(loopCounter >= allUsers.length) {
-        users.sort(function(a, b) {
-          return b.username - a.username;
-        });
-        var userTags = users.map(function(user) {
-          return template.render('user.html', user);
-        }).join("");
-        callback(false, userTags);
+      var firstName = user.firstname;
+      var lastName = user.lastname;
+      if(!firstName){
+        firstName = "";
       }
+      if(!lastName) {
+        lastName = "";
+      }
+
+      getUserStats(user.username, function(stats) {
+        users.push({username: user.username,
+                    imageUrl: imageUrl,
+                    firstname: firstName,
+                    lastname: lastName,
+                    followtext: followText,
+                    userchirps: stats.userchirps,
+                    userfollowers: stats.userfollowers,
+                    userfollowing: stats.userfollowing});
+
+        loopCounter++;
+        if(loopCounter >= allUsers.length) {
+          users.sort(function(a, b) {
+            return b.username - a.username;
+          });
+          var userTags = users.map(function(user) {
+            return template.render('user.html', user);
+          }).join("");
+          callback(false, userTags);
+        }
+      });
+    });
+  });
+}
+
+function getUserStats(username, callback) {
+  var userChirps;
+  db.get('SELECT COUNT(*) FROM '+username+'_chirps', [], function(err, count) {
+    if(count) {
+      userChirps = count['COUNT(*)'];
+    } else {
+      userChirps = 0;
+    }
+    var userFollowing;
+    db.get('SELECT COUNT(*) FROM '+username+'_following', [], function(err, count) {
+      if(count) {
+        userFollowing = count['COUNT(*)'];
+      } else {
+        userChirps = 0;
+      }
+      var userFollowers = 0;
+      db.all('SELECT * FROM users', [], function(err, users) {
+        var queryString = "";
+        var params = [];
+        users.forEach(function(user) {
+          queryString += 'SELECT * FROM ' + user.username + '_following where username=? UNION ALL ';
+          params.push(username);
+        });
+        queryString = queryString.slice(0, queryString.length - 11);
+        db.all(queryString, params, function(err, followers) {
+          if(followers) {
+            userFollowers = followers.length;
+          }
+          callback({userchirps: userChirps, userfollowers: userFollowers, userfollowing: userFollowing});
+        });
+      });
     });
   });
 }
@@ -168,12 +209,18 @@ function getUser(req, username, callback) {
       if(!lastName) {
         lastName = "";
       }
-      var userTemplate = template.render('user.html', {username: username,
-                                                      imageUrl: imageUrl,
-                                                      firstname: firstName,
-                                                      lastname: lastName,
-                                                      followtext: followText});
-      callback(false, userTemplate);
+
+      getUserStats(username, function(stats) {
+        var userTemplate = template.render('user.html', {username: username,
+                                                        imageUrl: imageUrl,
+                                                        firstname: firstName,
+                                                        lastname: lastName,
+                                                        followtext: followText,
+                                                        userchirps: stats.userchirps,
+                                                        userfollowing: stats.userfollowing,
+                                                        userfollowers: stats.userfollowers});
+        callback(false, userTemplate);
+      });
     });
   });
 }
