@@ -12,7 +12,7 @@ var template = require('./lib/template');
 var fileserver = require('./lib/fileserver');
 var http = require('http');
 var url = require('url');
-var fs = require('fs');
+var fs = require('fs-extra');
 var encryption = require('./lib/encryption');
 var urlencoded = require('./lib/form-urlencoded');
 var sqlite3 = require('sqlite3').verbose();
@@ -104,43 +104,36 @@ function makeUserTags(allUsers, username, callback) {
       if(row) {
         followText = "Unfollow";
       }
-      var imageUrl = user.username + '.jpg';
-      fs.readFile('./images/' + imageUrl, function(err, image) {
-        if(err) {
-          imageUrl = 'default.jpg';
+        var firstName = user.firstname;
+        var lastName = user.lastname;
+        if(!firstName){
+          firstName = "";
         }
-      });
-      var firstName = user.firstname;
-      var lastName = user.lastname;
-      if(!firstName){
-        firstName = "";
-      }
-      if(!lastName) {
-        lastName = "";
-      }
-
-      getUserStats(user.username, function(stats) {
-        users.push({username: user.username,
-                    imageUrl: imageUrl,
-                    firstname: firstName,
-                    lastname: lastName,
-                    followtext: followText,
-                    userchirps: stats.userchirps,
-                    userfollowers: stats.userfollowers,
-                    userfollowing: stats.userfollowing});
-
-        loopCounter++;
-        if(loopCounter >= allUsers.length) {
-          users.sort(function(a, b) {
-            return b.username - a.username;
-          });
-          var userTags = users.map(function(user) {
-            return template.render('user.html', user);
-          }).join("");
-          callback(false, userTags);
+        if(!lastName) {
+          lastName = "";
         }
+        getUserStats(user.username, function(stats) {
+          users.push({username: user.username,
+                      imageUrl: user.username+'.jpg',
+                      firstname: firstName,
+                      lastname: lastName,
+                      followtext: followText,
+                      userchirps: stats.userchirps,
+                      userfollowers: stats.userfollowers,
+                      userfollowing: stats.userfollowing});
+
+          loopCounter++;
+          if(loopCounter >= allUsers.length) {
+            users.sort(function(a, b) {
+              return b.username - a.username;
+            });
+            var userTags = users.map(function(user) {
+              return template.render('user.html', user);
+            }).join("");
+            callback(false, userTags);
+          }
+        });
       });
-    });
   });
 }
 
@@ -197,30 +190,25 @@ function getUser(req, username, callback) {
     }
 
     var imageUrl = username + '.jpg';
-    fs.readFile('./images/' + imageUrl, function(err, image) {
-      if(err) {
-        imageUrl = 'default.jpg';
-      }
-      var firstName = user.firstname;
-      var lastName = user.lastname;
-      if(!firstName){
-        firstName = "";
-      }
-      if(!lastName) {
-        lastName = "";
-      }
+    var firstName = user.firstname;
+    var lastName = user.lastname;
+    if(!firstName){
+      firstName = "";
+    }
+    if(!lastName) {
+      lastName = "";
+    }
 
-      getUserStats(username, function(stats) {
-        var userTemplate = template.render('user.html', {username: username,
-                                                        imageUrl: imageUrl,
-                                                        firstname: firstName,
-                                                        lastname: lastName,
-                                                        followtext: followText,
-                                                        userchirps: stats.userchirps,
-                                                        userfollowing: stats.userfollowing,
-                                                        userfollowers: stats.userfollowers});
-        callback(false, userTemplate);
-      });
+    getUserStats(username, function(stats) {
+      var userTemplate = template.render('user.html', {username: username,
+                                                      imageUrl: imageUrl,
+                                                      firstname: firstName,
+                                                      lastname: lastName,
+                                                      followtext: followText,
+                                                      userchirps: stats.userchirps,
+                                                      userfollowing: stats.userfollowing,
+                                                      userfollowers: stats.userfollowers});
+      callback(false, userTemplate);
     });
   });
 }
@@ -469,6 +457,13 @@ function updateAccountSettings(req, res) {
                   res.end("Server Error");
                   return;
                 }
+              });
+            } else {
+              fs.copy('images/default.jpg', 'images/'+username+'.jpg', function(err) {
+                console.error(err);
+                res.statusCode = 500;
+                res.statusMessage = "Server Error";
+                res.end("Server Error");
               });
             }
             res.statusCode = 302;
