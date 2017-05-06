@@ -107,10 +107,10 @@ function makeUserTags(allUsers, username, callback) {
         var firstName = user.firstname;
         var lastName = user.lastname;
         if(!firstName){
-          firstName = "";
+          firstName = "Chirp";
         }
         if(!lastName) {
-          lastName = "";
+          lastName = "User";
         }
         getUserStats(user.username, function(stats) {
           users.push({username: user.username,
@@ -193,10 +193,10 @@ function getUser(req, username, callback) {
     var firstName = user.firstname;
     var lastName = user.lastname;
     if(!firstName){
-      firstName = "";
+      firstName = "Chirp";
     }
     if(!lastName) {
-      lastName = "";
+      lastName = "User";
     }
 
     getUserStats(username, function(stats) {
@@ -436,7 +436,7 @@ function updateAccountSettings(req, res) {
       var username = req.session.username;
       var firstName = req.body.firstname;
       var lastName = req.body.lastname;
-      if(firstName != '' || lastName != ''){
+      if(firstName != ' ' || lastName != ' '){
         db.run('UPDATE users SET firstname=?, lastname=? WHERE username=?',
                   [firstName, lastName, username], function(err) {
                     if(err) {
@@ -447,29 +447,55 @@ function updateAccountSettings(req, res) {
                     }
                   }
                 );
+        }
+        console.log(req.body.image.filename)
+        if(req.body.image.filename) {
+          fs.writeFile('images/' + username+'.jpg', req.body.image.data, function(err){
+            if(err) {
+              console.error(err);
+              res.statusCode = 500;
+              res.statusMessage = "Server Error";
+              res.end("Server Error");
+              return;
             }
-            if(req.body.image.filename) {
-              fs.writeFile('images/' + username+'.jpg', req.body.image.data, function(err){
+          });
+        } else {
+          fs.exists('images/' + username +'.jpg', function(exists) {
+            if(!exists) {
+              fs.copy('images/default.jpg', 'images/'+username+'.jpg', function(err) {
                 if(err) {
                   console.error(err);
                   res.statusCode = 500;
                   res.statusMessage = "Server Error";
                   res.end("Server Error");
-                  return;
                 }
               });
-            } else {
-              fs.copy('images/default.jpg', 'images/'+username+'.jpg', function(err) {
-                console.error(err);
-                res.statusCode = 500;
-                res.statusMessage = "Server Error";
-                res.end("Server Error");
-              });
             }
-            res.statusCode = 302;
-            res.setHeader("Location", "/home");
-            res.end();
-        });
+          });
+        }
+        res.statusCode = 302;
+        res.setHeader("Location", "/home");
+        res.end();
+  });
+}
+
+function deleteAccount(req, res) {
+  var username = req.session.username;
+
+  db.run('DROP TABLE ' + username + '_following',[]);
+  db.run('DROP TABLE ' + username + '_chirps', []);
+  db.run('DELETE FROM users WHERE username=?', [username]);
+  fs.unlink('images/' + username + '.jpg');
+
+  db.all('SELECT * FROM users', [], function(err, users) {
+    users.forEach(function(user) {
+      db.run('DELETE FROM ' + user.username + '_following WHERE username=?', [username]);
+    });
+  });
+
+  res.statusCode = 302;
+  res.setHeader("Location", "/logout")
+  res.end(serveTemplate(req, res, ['','logout']));
 }
 
 /** @function handleRequest
@@ -545,6 +571,15 @@ function handleRequest(req, res) {
 
     case 'images':
       serveImage(urlParts[2], req, res);
+      break;
+
+    case 'logout':
+    case 'logout.html':
+      if(req.method == 'GET') {
+        serveTemplate(req, res, urlParts);
+      } else {
+        deleteAccount(req, res);
+      }
       break;
 
     default:
