@@ -167,7 +167,7 @@ img {
 
 .chirp-body {
   width: 60%;
-  word-break: break-all;
+  word-break: normal;
   display: inline-block;
 }
 
